@@ -1,0 +1,20 @@
+---
+kind: ConfigMap 
+apiVersion: v1 
+metadata:
+  name: fio-job-config
+data:
+  fio.job: |-
+    [global]
+    ioengine=libaio
+    direct=0
+    buffered=0
+    size=10G
+    iodepth=16
+    numjobs=4
+    group_reporting
+    percentage_random=50
+    bs=4K
+    buffer_compress_percentage=50
+    rw=randwrite
+    [testjob]

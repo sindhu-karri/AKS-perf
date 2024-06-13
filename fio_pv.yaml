@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: fio-data
+  labels:
+    type: local
+spec:
+  storageClassName: azurefile
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  hostPath:
+    path: "/scratch"
+

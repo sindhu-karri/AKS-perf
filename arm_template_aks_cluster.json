@@ -1,0 +1,279 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "managedClusters_kubcluster_testing_name": {
+            "defaultValue": "kubcluster_testing",
+            "type": "String"
+        },
+        "workspaces_kube_stress_log_analytics_workspace_externalid": {
+            "defaultValue": "/subscriptions/60f3ac75-ce11-4deb-9030-d3896b73c46c/resourceGroups/bhapathak-rg/providers/Microsoft.OperationalInsights/workspaces/kube-stress-log-analytics-workspace",
+            "type": "String"
+        },
+        "publicIPAddresses_3e7b0a75_7f32_4ae3_9e71_8823e0116a87_externalid": {
+            "defaultValue": "/subscriptions/60f3ac75-ce11-4deb-9030-d3896b73c46c/resourceGroups/MC_bhapathak-rg_kubcluster_testing_eastus/providers/Microsoft.Network/publicIPAddresses/3e7b0a75-7f32-4ae3-9e71-8823e0116a87",
+            "type": "String"
+        },
+        "userAssignedIdentities_kubcluster_testing_agentpool_externalid": {
+            "defaultValue": "/subscriptions/60f3ac75-ce11-4deb-9030-d3896b73c46c/resourceGroups/MC_bhapathak-rg_kubcluster_testing_eastus/providers/Microsoft.ManagedIdentity/userAssignedIdentities/kubcluster_testing-agentpool",
+            "type": "String"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ContainerService/managedClusters",
+            "apiVersion": "2024-02-02-preview",
+            "name": "[parameters('managedClusters_kubcluster_testing_name')]",
+            "location": "eastus",
+            "sku": {
+                "name": "Base",
+                "tier": "Free"
+            },
+            "kind": "Base",
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "kubernetesVersion": "1.29.4",
+                "dnsPrefix": "kubestress-test",
+                "agentPoolProfiles": [
+                    {
+                        "name": "agentpool",
+                        "count": 2,
+                        "vmSize": "Standard_DS2_v2",
+                        "osDiskSizeGB": 128,
+                        "osDiskType": "Managed",
+                        "kubeletDiskType": "OS",
+                        "maxPods": 110,
+                        "type": "VirtualMachineScaleSets",
+                        "maxCount": 5,
+                        "minCount": 2,
+                        "enableAutoScaling": true,
+                        "powerState": {
+                            "code": "Running"
+                        },
+                        "orchestratorVersion": "1.29.4",
+                        "enableNodePublicIP": false,
+                        "mode": "System",
+                        "osType": "Linux",
+                        "osSKU": "Ubuntu",
+                        "upgradeSettings": {
+                            "maxSurge": "10%"
+                        },
+                        "enableFIPS": false,
+                        "securityProfile": {
+                            "sshAccess": "LocalUser",
+                            "enableVTPM": false,
+                            "enableSecureBoot": false
+                        }
+                    }
+                ],
+                "servicePrincipalProfile": {
+                    "clientId": "msi"
+                },
+                "addonProfiles": {
+                    "azureKeyvaultSecretsProvider": {
+                        "enabled": false
+                    },
+                    "azurepolicy": {
+                        "enabled": false
+                    },
+                    "omsAgent": {
+                        "enabled": true,
+                        "config": {
+                            "logAnalyticsWorkspaceResourceID": "[parameters('workspaces_kube_stress_log_analytics_workspace_externalid')]",
+                            "useAADAuth": "true"
+                        }
+                    }
+                },
+                "nodeResourceGroup": "[concat('MC_bhapathak-rg_', parameters('managedClusters_kubcluster_testing_name'), '_eastus')]",
+                "enableRBAC": true,
+                "supportPlan": "KubernetesOfficial",
+                "networkProfile": {
+                    "networkPlugin": "kubenet",
+                    "networkPolicy": "none",
+                    "loadBalancerSku": "Standard",
+                    "loadBalancerProfile": {
+                        "managedOutboundIPs": {
+                            "count": 1
+                        },
+                        "effectiveOutboundIPs": [
+                            {
+                                "id": "[parameters('publicIPAddresses_3e7b0a75_7f32_4ae3_9e71_8823e0116a87_externalid')]"
+                            }
+                        ],
+                        "backendPoolType": "nodeIPConfiguration",
+                        "clusterServiceLoadBalancerHealthProbeMode": "servicenodeport"
+                    },
+                    "podCidr": "10.244.0.0/16",
+                    "serviceCidr": "10.0.0.0/16",
+                    "dnsServiceIP": "10.0.0.10",
+                    "outboundType": "loadBalancer",
+                    "podCidrs": [
+                        "10.244.0.0/16"
+                    ],
+                    "serviceCidrs": [
+                        "10.0.0.0/16"
+                    ],
+                    "ipFamilies": [
+                        "IPv4"
+                    ]
+                },
+                "identityProfile": {
+                    "kubeletidentity": {
+                        "resourceId": "[parameters('userAssignedIdentities_kubcluster_testing_agentpool_externalid')]",
+                        "clientId": "0a37ac7b-4d5e-41d0-afbf-be9fad07c415",
+                        "objectId": "8988a033-af48-4e67-9fba-b52a4d97cf0a"
+                    }
+                },
+                "autoScalerProfile": {
+                    "balance-similar-node-groups": "false",
+                    "daemonset-eviction-for-empty-nodes": false,
+                    "daemonset-eviction-for-occupied-nodes": true,
+                    "expander": "random",
+                    "ignore-daemonsets-utilization": false,
+                    "max-empty-bulk-delete": "10",
+                    "max-graceful-termination-sec": "600",
+                    "max-node-provision-time": "15m",
+                    "max-total-unready-percentage": "45",
+                    "new-pod-scale-up-delay": "0s",
+                    "ok-total-unready-count": "3",
+                    "scale-down-delay-after-add": "10m",
+                    "scale-down-delay-after-delete": "10s",
+                    "scale-down-delay-after-failure": "3m",
+                    "scale-down-unneeded-time": "10m",
+                    "scale-down-unready-time": "20m",
+                    "scale-down-utilization-threshold": "0.5",
+                    "scan-interval": "10s",
+                    "skip-nodes-with-local-storage": "false",
+                    "skip-nodes-with-system-pods": "true"
+                },
+                "autoUpgradeProfile": {
+                    "upgradeChannel": "patch",
+                    "nodeOSUpgradeChannel": "NodeImage"
+                },
+                "disableLocalAccounts": false,
+                "securityProfile": {},
+                "storageProfile": {
+                    "diskCSIDriver": {
+                        "enabled": true,
+                        "version": "v1"
+                    },
+                    "fileCSIDriver": {
+                        "enabled": true
+                    },
+                    "snapshotController": {
+                        "enabled": true
+                    }
+                },
+                "oidcIssuerProfile": {
+                    "enabled": false
+                },
+                "workloadAutoScalerProfile": {},
+                "azureMonitorProfile": {
+                    "metrics": {
+                        "enabled": true,
+                        "kubeStateMetrics": {}
+                    },
+                    "containerInsights": {
+                        "enabled": true,
+                        "logAnalyticsWorkspaceResourceId": "[parameters('workspaces_kube_stress_log_analytics_workspace_externalid')]"
+                    }
+                },
+                "metricsProfile": {
+                    "costAnalysis": {
+                        "enabled": false
+                    }
+                },
+                "nodeProvisioningProfile": {
+                    "mode": "Manual"
+                },
+                "bootstrapProfile": {
+                    "artifactSource": "Direct"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/agentPools",
+            "apiVersion": "2024-02-02-preview",
+            "name": "[concat(parameters('managedClusters_kubcluster_testing_name'), '/agentpool')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_kubcluster_testing_name'))]"
+            ],
+            "properties": {
+                "count": 2,
+                "vmSize": "Standard_DS2_v2",
+                "osDiskSizeGB": 128,
+                "osDiskType": "Managed",
+                "kubeletDiskType": "OS",
+                "maxPods": 110,
+                "type": "VirtualMachineScaleSets",
+                "maxCount": 5,
+                "minCount": 2,
+                "enableAutoScaling": true,
+                "powerState": {
+                    "code": "Running"
+                },
+                "orchestratorVersion": "1.29.4",
+                "enableNodePublicIP": false,
+                "mode": "System",
+                "osType": "Linux",
+                "osSKU": "Ubuntu",
+                "upgradeSettings": {
+                    "maxSurge": "10%"
+                },
+                "enableFIPS": false,
+                "securityProfile": {
+                    "sshAccess": "LocalUser",
+                    "enableVTPM": false,
+                    "enableSecureBoot": false
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/maintenanceConfigurations",
+            "apiVersion": "2024-02-02-preview",
+            "name": "[concat(parameters('managedClusters_kubcluster_testing_name'), '/aksManagedAutoUpgradeSchedule')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_kubcluster_testing_name'))]"
+            ],
+            "properties": {
+                "maintenanceWindow": {
+                    "schedule": {
+                        "weekly": {
+                            "intervalWeeks": 1,
+                            "dayOfWeek": "Sunday"
+                        }
+                    },
+                    "durationHours": 4,
+                    "utcOffset": "+00:00",
+                    "startDate": "2024-06-11",
+                    "startTime": "00:00"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.ContainerService/managedClusters/maintenanceConfigurations",
+            "apiVersion": "2024-02-02-preview",
+            "name": "[concat(parameters('managedClusters_kubcluster_testing_name'), '/aksManagedNodeOSUpgradeSchedule')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('managedClusters_kubcluster_testing_name'))]"
+            ],
+            "properties": {
+                "maintenanceWindow": {
+                    "schedule": {
+                        "weekly": {
+                            "intervalWeeks": 1,
+                            "dayOfWeek": "Sunday"
+                        }
+                    },
+                    "durationHours": 4,
+                    "utcOffset": "+00:00",
+                    "startDate": "2024-06-11",
+                    "startTime": "00:00"
+                }
+            }
+        }
+    ]
+}
