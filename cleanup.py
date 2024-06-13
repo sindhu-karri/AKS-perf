@@ -18,37 +18,26 @@ client.Configuration.set_default(config)
 core_v1 = client.CoreV1Api()
 apps_v1 = client.AppsV1Api()
 
-print("Creating config map ")
+print("Deleting config map ")
 with open(os.path.join(os.path.dirname(__file__), "configs.yaml")) as f:
         dep = yaml.safe_load(f)
-        resp = core_v1.create_namespaced_config_map(namespace="default", body=dep)
-        print("Config Maps created. status='%s'" % resp.metadata.name)
+        import pdb
+        resp = core_v1.delete_namespaced_config_map(dep['metadata']['name'], "default")
 
 
-print("Creating Volume")
+print("Deleting Volume")
 with open(os.path.join(os.path.dirname(__file__), "fio_pv.yaml")) as f:
         dep = yaml.safe_load(f)
-        resp = core_v1.create_persistent_volume(body=dep)
-        print("Persistent Volume created. status='%s'" % resp.metadata.name)
+        pdb.set_trace()
+        resp = core_v1.delete_persistent_volume(dep['metadata']['name'])
 
-
-print("Creating Persistent Volume Claim")
+print("Deleting Persistent Volume Claim")
 with open(os.path.join(os.path.dirname(__file__), "fio_pvc.yaml")) as f:
     dep = yaml.safe_load(f)
-    resp = core_v1.create_namespaced_persistent_volume_claim("default", body=dep)
-    print("Persistent Volume Claim created. status='%s'" % resp.metadata.name)
+    resp = core_v1.delete_namespaced_persistent_volume_claim(dep['metadata']['name'], "default")
 
-print("Creating fio deployment")
+print("Deleting fio deployment")
 with open(os.path.join(os.path.dirname(__file__), "fio_deployment_pvc.yaml")) as f:
         dep = yaml.safe_load(f)
         resp = apps_v1.create_namespaced_deployment(
             body=dep, namespace="default")
-        print("Deployment created. status='%s'" % resp.metadata.name)
-
-print("Listing pods with their IPs:")
-ret = core_v1.list_pod_for_all_namespaces(watch=False)
-for item in ret.items:
-    print("%s\t%s\t%s" %
-            (item.status.pod_ip,
-             item.metadata.namespace,
-             item.metadata.name))

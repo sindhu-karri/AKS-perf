@@ -2,3 +2,5 @@ python-dotenv
 azure-identity
 azure-mgmt-resource
 azure-mgmt-containerservice
+opentelemetry-sdk
+opentelemetry-api
