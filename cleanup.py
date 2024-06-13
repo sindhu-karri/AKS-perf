@@ -28,7 +28,6 @@ with open(os.path.join(os.path.dirname(__file__), "configs.yaml")) as f:
 print("Deleting Volume")
 with open(os.path.join(os.path.dirname(__file__), "fio_pv.yaml")) as f:
         dep = yaml.safe_load(f)
-        pdb.set_trace()
         resp = core_v1.delete_persistent_volume(dep['metadata']['name'])
 
 print("Deleting Persistent Volume Claim")
@@ -39,5 +38,5 @@ with open(os.path.join(os.path.dirname(__file__), "fio_pvc.yaml")) as f:
 print("Deleting fio deployment")
 with open(os.path.join(os.path.dirname(__file__), "fio_deployment_pvc.yaml")) as f:
         dep = yaml.safe_load(f)
-        resp = apps_v1.create_namespaced_deployment(
-            body=dep, namespace="default")
+        resp = apps_v1.delete_namespaced_deployment(
+            dep['metadata']['name'], namespace="default")
